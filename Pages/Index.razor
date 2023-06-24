@@ -1,0 +1,93 @@
+﻿@page "/"
+
+@inject Interfaces.ICongestionTaxCalculator _iCongestionTaxCalculator
+
+<h1>Calculate Tax!</h1>
+
+@if (LstVehicleViewClass != null)
+{
+<button class="btn btn-success" @onclick="GetRandomData">Re-Generate</button>
+<table class="table table-sm table-dark">
+    <thead>
+        <tr>
+            <th scope="col">Row</th>
+            <th scope="col">Date</th>
+            <th scope="col">Day</th>
+            <th scope="col">Vehicle ID</th>
+            <th scope="col">Tax</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in LstVehicleViewClass)
+        {
+            <tr>
+                <th scope="row">@item.RowID</th>
+                <td>@item.DateOfTravel</td>
+                <td>@item.DateOfTravel.ToString("dddd")</td>
+                <td>@item.VehicleVID</td>
+                <td>@item.TaxAmount</td>
+            </tr>
+        }
+        <tr class="table-primary">
+            <th colspan="4" class="bg-bg-danger">Total Sum:</th>
+            <td class="bg-danger">@LstVehicleViewClass.Sum(n=> n.TaxAmount)</td>
+        </tr>
+    </tbody>
+</table>
+}
+else
+{
+    <p class="alert-warning">Wait . . .</p>
+}
+
+
+@code
+{
+    List<VehicleViewClass> LstVehicleViewClass;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetRandomData();
+    }
+
+    public async Task GetRandomData()
+    {
+        LstVehicleViewClass = await _iCongestionTaxCalculator.GetTax(
+            new Entities.Vehicle()
+            {
+                LicensePlate = "P-571",
+                Model = "M87",
+                VehicleID = 1,
+                VehicleName = "Cartofel",
+                YearModel = 2020,
+                VehicleTypeID = 10,
+                VehicleType = new Entities.VehicleType()
+                {
+                    VehicleTypeID = 10,
+                    IsTollFree = false,
+                    VehicleTypeName = "Coupe"
+                }
+            }, GenerateDates(8), 1);
+        StateHasChanged();
+    }
+
+    public DateTime[] GenerateDates(int DatesQuantity)
+    {
+        DateTime startDate = new DateTime(2013, 1, 1);
+        DateTime endDate = new DateTime(2013, 12, 31);
+        int numDates = DatesQuantity;
+
+        DateTime[] dateList = new DateTime[numDates];
+        Random random = new Random();
+
+        for (int i = 0; i < numDates; i++)
+        {
+            TimeSpan timeSpan = endDate - startDate;
+            TimeSpan newSpan = new TimeSpan(0, random.Next(0, (int)timeSpan.TotalMinutes), 0);
+            dateList[i] = startDate + newSpan;
+        }
+
+        return dateList;
+    }
+
+}
